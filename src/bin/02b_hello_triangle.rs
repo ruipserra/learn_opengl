@@ -1,13 +1,11 @@
-#[macro_use]
 extern crate learn_opengl as lgl;
 extern crate gl;
 
 use std::mem;
 use std::ptr;
 
-use lgl::prelude::*;
 use lgl::{create_window, Event};
-use lgl::program::{Program, Shader, ShaderType};
+use lgl::program::{SourceCompiler, ShaderType};
 
 use gl::types::*;
 
@@ -38,19 +36,12 @@ void main() {
 "#;
 
 fn main() {
-    // We already know how to create a window, so let's go ahead and just do it.
     let window = create_window("Hello Triangle");
 
-    // OpenGL uses a graphics pipeline to transform 3D into colored pixels. We can hook into the
-    // pipeline steps by writing our own shaders.
-    //
-    // OpenGL requires us to provide a vertex and fragment shader.
-    let vertex_shader   = Shader::new(ShaderType::Vertex, VERTEX_SHADER_SRC).unwrap();
-    let fragment_shader = Shader::new(ShaderType::Fragment, FRAGMENT_SHADER_SRC).unwrap();
-
-    // Now we construct a program from the compiled shaders. The program knows how to feed data
-    // from and to shaders.
-    let program = Program::link(&[vertex_shader, fragment_shader]).unwrap();
+    let program = SourceCompiler::compile(&[
+        (ShaderType::Vertex, VERTEX_SHADER_SRC),
+        (ShaderType::Fragment, FRAGMENT_SHADER_SRC),
+    ]).unwrap();
 
     // Next, we'll upload the triangle vertices to the GPU, where they'll be processed by the program
     // we just linked.

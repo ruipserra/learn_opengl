@@ -4,7 +4,7 @@ use gl::types::*;
 use std::ffi;
 use std::ptr;
 
-use GlObject;
+use gl_object::{GlObject, Handle};
 
 #[derive(Debug)]
 pub enum ProgramCreationError {
@@ -13,7 +13,7 @@ pub enum ProgramCreationError {
 }
 
 pub struct Program {
-    id: GLuint,
+    id: Handle,
 }
 
 impl Drop for Program {
@@ -25,7 +25,8 @@ impl Drop for Program {
 }
 
 impl GlObject for Program {
-    fn id(&self) -> GLuint {
+    #[inline]
+    fn id(&self) -> Handle {
         self.id
     }
 }
@@ -86,20 +87,44 @@ impl Program {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum ShaderType {
     Vertex,
     Fragment,
-    // TODO
+    Geometry,
+    TessControl,
+    TessEvaluation,
+    Compute,
 }
 
 impl From<ShaderType> for GLenum {
     fn from(shader_type: ShaderType) -> Self {
         match shader_type {
-            ShaderType::Vertex   => gl::VERTEX_SHADER,
-            ShaderType::Fragment => gl::FRAGMENT_SHADER,
+            ShaderType::Vertex         => gl::VERTEX_SHADER,
+            ShaderType::Fragment       => gl::FRAGMENT_SHADER,
+            ShaderType::Geometry       => gl::GEOMETRY_SHADER,
+            ShaderType::TessControl    => gl::TESS_CONTROL_SHADER,
+            ShaderType::TessEvaluation => gl::TESS_EVALUATION_SHADER,
+            ShaderType::Compute        => gl::COMPUTE_SHADER,
+
         }
     }
 }
+
+impl ShaderType {
+    fn from_extension(ext: &str) -> Option<ShaderType> {
+        match ext {
+            ".vert" | ".vs.glsl" => Some(ShaderType::Vertex),
+            ".frag" | ".fs.glsl" => Some(ShaderType::Fragment),
+            ".geom" | ".gs.glsl" => Some(ShaderType::Geometry),
+            ".tesc" | ".tc.glsl" => Some(ShaderType::TessControl),
+            ".tese" | ".te.glsl" => Some(ShaderType::TessEvaluation),
+            ".comp" | ".cs.glsl" => Some(ShaderType::Compute),
+            _ => None
+        }
+    }
+}
+
 
 #[derive(Debug)]
 pub enum ShaderCreationError {
@@ -109,7 +134,7 @@ pub enum ShaderCreationError {
 }
 
 pub struct Shader {
-    id: GLuint,
+    id: Handle,
 }
 
 impl Drop for Shader {
@@ -119,7 +144,8 @@ impl Drop for Shader {
 }
 
 impl GlObject for Shader {
-    fn id(&self) -> GLuint {
+    #[inline]
+    fn id(&self) -> Handle {
         self.id
     }
 }
@@ -164,12 +190,30 @@ impl Shader {
 // 1. Compile from source (string).
 // 2. Compile from files.
 // 3. Compile from files with live reload.
-struct SourceCompiler {}
 
-impl SourceCompiler {
-
+#[derive(Debug)]
+pub enum SourceCompilerError {
+    ShaderCreationError(ShaderCreationError),
+    ProgramCreationError(ProgramCreationError),
 }
 
+pub struct SourceCompiler {}
 
-struct FileCompiler {}
-struct WatchingCompiler {}
+impl SourceCompiler {
+    pub fn compile(shader_sources: &[(ShaderType, &str)]) -> Result<Program, SourceCompilerError> {
+        let mut shaders = Vec::new();
+
+        for &(ty, source) in shader_sources {
+            let shader = Shader::new(ty, source)
+                .map_err(|e| SourceCompilerError::ShaderCreationError(e))?;
+
+            shaders.push(shader);
+        }
+
+        Program::link(&shaders).map_err(|e| SourceCompilerError::ProgramCreationError(e))
+    }
+}
+
+// TODO
+// struct FileCompiler {}
+// struct WatchingCompiler {}

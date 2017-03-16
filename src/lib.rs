@@ -4,18 +4,9 @@ extern crate gl;
 pub mod debug;
 pub mod program;
 
-pub use debug::GlError;
+mod gl_object;
+
 pub use glutin::Event;
-
-
-pub trait GlObject {
-    #[inline]
-    fn id(&self) -> gl::types::GLuint;
-}
-
-pub mod prelude {
-    pub use super::GlObject;
-}
 
 pub fn create_window(title: &str) -> glutin::Window {
     use glutin::{Api, GlProfile, GlRequest, WindowBuilder};

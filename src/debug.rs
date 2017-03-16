@@ -7,7 +7,7 @@ use std::error::Error;
 #[macro_export]
 macro_rules! check_gl_error {
     () => {
-        match $crate::GlError::check() {
+        match $crate::debug::GlError::check() {
             Some(error) => println!("{}:{}: {}", file!(), line!(), error),
             _ => (),
         }

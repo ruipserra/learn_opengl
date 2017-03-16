@@ -18,8 +18,8 @@ const TEX_COORD_LOCATION: u8 = 2;
 const VERTEX_SHADER_SRC: &'static str = r#"
 #version 330 core
 
-layout (location = 0)  in vec3 vbo_position;
-layout (location = 1)     in vec3 vbo_color;
+layout (location = 0) in vec3 vbo_position;
+layout (location = 1) in vec3 vbo_color;
 layout (location = 2) in vec2 vbo_tex_coord;
 
 out vec3 color;
